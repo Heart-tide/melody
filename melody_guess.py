@@ -9,12 +9,12 @@ import time
 from threading import Thread
 
 
-def sleep_and_echo(sleep_time, str):
+def sleep_and_echo(sleep_time, str) -> None:
     time.sleep(sleep_time)
     print(str)
     
 
-def play_midi(midi_file, padding_count, total_duration, bpm):
+def play_midi(midi_file, padding_count, total_duration, bpm) -> None:
     # 每个四分音符的时值是 60s/bpm
     note_duration = 60 / bpm
     start_echo = Thread(target=sleep_and_echo, args=(padding_count * note_duration, "⭐ 开始了哦！", ))
@@ -27,7 +27,7 @@ def play_midi(midi_file, padding_count, total_duration, bpm):
     )
 
 
-def get_random_note_duration(note_durations, special_pattern_rate):
+def get_random_note_duration(note_durations, special_pattern_rate) -> tuple:
     special_pattern = (
         (0.5, 0.5) if 0.5 in note_durations else None,
         (0.25, 0.25, 0.25, 0.25) if 0.25 in note_durations else None,
@@ -40,7 +40,7 @@ def get_random_note_duration(note_durations, special_pattern_rate):
         return (random.choice(note_durations), )
 
 
-def make_melody(note_count, note_durations, special_pattern_rate, padding_count):
+def make_melody(note_count, note_durations, special_pattern_rate, padding_count) -> stream.Stream:
     # 创建一个乐谱流
     melody_stream = stream.Stream()
 
@@ -73,7 +73,7 @@ def make_melody(note_count, note_durations, special_pattern_rate, padding_count)
     return melody_stream
 
 
-def play_and_guess(melody_stream, midi_file, padding_count, bpm):
+def play_and_guess(melody_stream, midi_file, padding_count, bpm) -> None:
     play_midi(midi_file, padding_count, melody_stream.duration.quarterLength, bpm)
 
     # 等待用户输入他听到的时值
