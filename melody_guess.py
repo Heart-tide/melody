@@ -27,20 +27,20 @@ def play_midi(midi_file, padding_count, total_duration, bpm):
     )
 
 
-def get_random_note_duration(note_duration, special_pattern_rate):
+def get_random_note_duration(note_durations, special_pattern_rate):
     special_pattern = (
-        (0.5, 0.5) if 0.5 in note_duration else None,
-        (0.25, 0.25, 0.25, 0.25) if 0.25 in note_duration else None,
-        (0.25, 0.25, 0.25, 0.25) if 0.25 in note_duration else None,
+        (0.5, 0.5) if 0.5 in note_durations else None,
+        (0.25, 0.25, 0.25, 0.25) if 0.25 in note_durations else None,
+        (0.25, 0.25, 0.25, 0.25) if 0.25 in note_durations else None,
     )
     special_pattern = tuple(x for x in special_pattern if x is not None)
     if special_pattern and random.random() < special_pattern_rate:
         return random.choice(special_pattern)
     else:
-        return (random.choice(note_duration), )
+        return (random.choice(note_durations), )
 
 
-def main(note_count, note_duration, special_pattern_rate, bpm):
+def make_melody(note_count, note_durations, special_pattern_rate, padding_count):
     # 创建一个乐谱流
     melody_stream = stream.Stream()
 
@@ -48,7 +48,6 @@ def main(note_count, note_duration, special_pattern_rate, bpm):
     metronome = tempo.MetronomeMark(number=bpm)
     melody_stream.append(metronome)
     
-    padding_count = 4
     print(f'首先播放{padding_count}个四分音符，接下来是随机的音符时值')
     # 添加四个4分音符
     for _ in range(padding_count):
@@ -59,9 +58,9 @@ def main(note_count, note_duration, special_pattern_rate, bpm):
     i = 0
     while i < note_count:
         # 随机选择时值类型
-        selected_durations = get_random_note_duration(note_duration, special_pattern_rate)
+        selected_durations = get_random_note_duration(note_durations, special_pattern_rate)
         while len(selected_durations) + i > note_count:
-            selected_durations = get_random_note_duration(note_duration, special_pattern_rate)
+            selected_durations = get_random_note_duration(note_durations, special_pattern_rate)
         i += len(selected_durations)
         
         for d in selected_durations:
@@ -70,11 +69,11 @@ def main(note_count, note_duration, special_pattern_rate, bpm):
 
             # 将音符添加到流中
             melody_stream.append(n)
+    
+    return melody_stream
 
-    # 创建随机名称midi文件
-    midi_file = tempfile.mktemp(suffix='.mid', dir='.')
-    melody_stream.write('midi', midi_file)
 
+def play_and_guess(melody_stream, midi_file, padding_count, bpm):
     play_midi(midi_file, padding_count, melody_stream.duration.quarterLength, bpm)
 
     # 等待用户输入他听到的时值
@@ -103,14 +102,10 @@ def main(note_count, note_duration, special_pattern_rate, bpm):
 
         play_midi(midi_file, padding_count, melody_stream.duration.quarterLength, bpm)
 
-    # 删除临时文件
-    subprocess.run(['rm', midi_file])
-    print('删除临时文件:', midi_file)
-
     
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Usage: melody_guess.py <note_count> <note_duration> <special_pattern_rate> <bpm>")
+        print("Usage: melody_guess.py <note_count> <note_durations> <special_pattern_rate> <bpm>")
         print("Example: python music.py 10 0.5,1.0,2.0 0.3 60")
         sys.exit(1)
 
@@ -118,7 +113,7 @@ if __name__ == "__main__":
         # argv[1] 是音符数量
         note_count = int(sys.argv[1]) 
         # argv[2] 是一个以逗号分割的时值列表
-        note_duration = list(map(float, sys.argv[2].split(',')))
+        note_durations = list(map(float, sys.argv[2].split(',')))
         # argv[3] 是special pattern的概率
         special_pattern_rate = float(sys.argv[3])
         # argv[4] 是BPM
@@ -128,9 +123,21 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print('音符数量:', note_count)
-    print('时值列表:', note_duration)
+    print('时值列表:', note_durations)
     print('SP概率:', special_pattern_rate)
     print('BPM:', bpm)
 
-    # 运行主函数
-    main(note_count, note_duration, special_pattern_rate, bpm)
+    # 创建随机乐谱流
+    padding_count = 4
+    melody_stream = make_melody(note_count, note_durations, special_pattern_rate, padding_count)
+
+    # 将乐谱写入midi文件
+    midi_file = tempfile.mktemp(suffix='.mid', dir='.')
+    melody_stream.write('midi', midi_file)
+
+    # 播放乐谱
+    play_and_guess(melody_stream, midi_file, padding_count, bpm)
+
+    # 删除临时文件
+    subprocess.run(['rm', midi_file])
+    print('删除临时文件:', midi_file)
