@@ -110,7 +110,7 @@ def main(note_count, note_duration, special_pattern_rate, bpm):
     
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Usage: music.py <note_count> <note_duration> <special_pattern_rate> <bpm>")
+        print("Usage: melody_guess.py <note_count> <note_duration> <special_pattern_rate> <bpm>")
         print("Example: python music.py 10 0.5,1.0,2.0 0.3 60")
         sys.exit(1)
 
